@@ -1,0 +1,80 @@
+
+#!/usr/bin/env bash
+
+set -euo pipefail
+BASE=/home/alessio-cucciari/Desktop/Programs/fhi-aims.250822/xtalopt_test
+
+export FHIAIMS=/home/alessio-cucciari/Desktop/Programs/fhi-aims.250822/bin/aims.x
+
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export MKL_DYNAMIC=FALSE
+ulimit -s unlimited
+export NP=4
+
+# for quick tests: export NSTEPS=1 (or 2/3/4)
+
+export NSTEPS=1
+
+# materialize structure from XtalOpt placeholder (IMPORTANT: no blank line inside heredoc)
+cat > POSCAR <<'EOF_POSCAR'
+H3S1 /home/alessio-cucciari/Desktop/Programs/fhi-aims.250822/xtalopt_test/runs//00001x00002/
+1
+  1.27108930   0.00000000   0.00000000
+  0.11567005   4.10495160   0.00000000
+  0.33943702   1.20214428   6.77216591
+H S 
+3 1 
+Direct
+  0.50000000   0.00000000   0.00000000
+  0.66245892   0.86871687   0.52840611
+  0.33754108   0.13128313   0.47159389
+  0.50000000   0.50000000   0.50000000
+EOF_POSCAR
+
+# number of relaxation steps from XtalOpt user field (set user1 = 1..4)
+
+NSTEPS_RAW="1"
+
+if [[ "$NSTEPS_RAW" =~ ^[1-4]$ ]]; then
+
+  NSTEPS="$NSTEPS_RAW"
+
+else
+
+  NSTEPS=1
+
+fi
+
+
+# run FHI-aims workflow
+
+bash "$BASE/bin/run_aims_4step_local.sh" . "$NSTEPS"
+
+
+# parse result
+
+RES=$(python3 "$BASE/bin/parse_aims_for_xtalopt.py" --workdir . --mode energy)
+
+
+
+# write to XtalOpt expected output file
+
+OUTFILE="/home/alessio-cucciari/Desktop/Programs/fhi-aims.250822/xtalopt_test/runs//00001x00002/"
+
+
+if [[ -d "$OUTFILE" || "$OUTFILE" == */ ]]; then
+
+
+  OUTDIR=$(echo "$OUTFILE" | sed 's:/*$::')
+
+  OUTFILE="$OUTDIR/job.out"
+
+fi
+
+cat > "$OUTFILE" <<EOF_RES
+
+$RES
+
+EOF_RES
+

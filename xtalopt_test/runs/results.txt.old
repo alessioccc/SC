@@ -1,0 +1,3 @@
+ Rank    Struct         Formula     Compos Index  EnthalpyAtm Front  AbovHullAtm    SG           Status
+    1       1x1            H3S1        3:1     0     0.000000    -1          nan    47           Killed
+    2       1x2            H3S1        3:1     1     0.000000    -1          nan     2            Error
